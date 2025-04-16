@@ -1,0 +1,25 @@
+[project]
+name = "hladl"
+version = "0.1.0"
+description = "Download and output sequences from IMGT/HLA"
+authors = [
+    {name = "Jamie Heather",email = "jheather@mgh.harvard.edu"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "typer (>=0.15.2,<0.16.0)",
+    "requests (>=2.32.3,<3.0.0)"
+]
+
+[tool.poetry]
+packages = [{include = "hladl", from = "src"}]
+
+
+[tool.poetry.scripts]
+hladl = "src.hladl.main:app"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
