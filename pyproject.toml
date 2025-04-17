@@ -1,6 +1,6 @@
 [project]
 name = "hladl"
-version = "0.1.0"
+version = "0.1.1"
 description = "Download and output sequences from IMGT/HLA"
 authors = [
     {name = "Jamie Heather",email = "jheather@mgh.harvard.edu"}
@@ -14,7 +14,8 @@ dependencies = [
 ]
 
 [tool.poetry]
-packages = [{include = "hladl", from = "src"}]
+packages = [{include = "hladl", from = "src"},
+            {include = "hladldata", from = "src"}]
 
 
 [tool.poetry.scripts]
