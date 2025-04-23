@@ -70,7 +70,7 @@ hladl dd
 The major case use I wanted `hladl` for is to import in other scripts, to allow for easy in-line grabbing of HLA sequences. It can be done by simple importing the relevant components and calling the `seq` function:
 
 ```bash
-from hladl.hladl import seq
+from hladl.get_seq import seq
 from hladl.main import data_dir
 
 seq1 = seq('A*02:01', 4, 'prot', 'ecd', 'stdout', data_dir)

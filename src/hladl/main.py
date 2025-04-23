@@ -6,7 +6,7 @@ import sys
 import typer
 from typing_extensions import Annotated
 from . import download as dl
-from . import hladl
+from . import get_seq as get
 from . import __version__
 from . import hladlfunctions as fxn
 
@@ -61,7 +61,7 @@ def seq(allele: Annotated[str, typer.Option("--allele", "-a",
     Output the sequence of a specified HLA allele.
     """
 
-    hla_seq = hladl.seq(allele, digits, seqtype, mode, output_mode, data_dir)
+    hla_seq = get.seq(allele, digits, seqtype, mode, output_mode, data_dir)
     if output_mode == 'stdout':
         if hla_seq:
             print(hla_seq)
@@ -75,6 +75,7 @@ def dd():
     Print the location of the hladl data directory
     """
     print(data_dir)
+    return data_dir
 
 
 @app.command()

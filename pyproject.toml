@@ -1,7 +1,7 @@
 [project]
 name = "hladl"
-version = "0.1.1"
-description = "Download and output sequences from IMGT/HLA"
+version = "0.1.2"
+description = "Download and output HLA sequences from IPD-IMGT/HLA."
 authors = [
     {name = "Jamie Heather",email = "jheather@mgh.harvard.edu"}
 ]
@@ -17,9 +17,8 @@ dependencies = [
 packages = [{include = "hladl", from = "src"},
             {include = "hladldata", from = "src"}]
 
-
 [tool.poetry.scripts]
-hladl = "src.hladl.main:app"
+hladl = "hladl.main:app"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
