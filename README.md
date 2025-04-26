@@ -20,6 +20,8 @@ pip install hladl
 
 ### Usage
 
+#### Getting the data
+
 Sequences can be downloaded to the installed data directory using `hladl init`. Users specify the *s*equence type (nucleotide, protein, or both) with the `-s` flag, and the HLA allele digit resolution (i.e. 2, 4, 6, or 8 digit, being HLA-X*22:44:66:88) wit the `-d` flag like so:
 
 ```bash
@@ -29,6 +31,16 @@ hladl init -s nuc -d 4
 # Download protein (AA) sequences for 2 digit alleles
 hladl init -s prot -d 2
 ```
+
+The location of the data directory can be determined using the `dd` command:
+```bash
+hladl dd
+
+# Will produce something like
+/path/to/where/its/saving/stuff
+```
+
+#### Grabbing HLA sequences
 
 Sequences can then be output to stdout using the `seq` command:
 ```bash
@@ -48,24 +60,7 @@ Users can also instead choose to produce a FASTA file of the designated allele u
 hladl seq -a B*07:02 -om fasta
 ```
 
-
-The location of the data directory can be determined using the `dd` command:
-```bash
-hladl dd
-
-# Will produce something like
-/path/to/where/its/saving/stuff
-```
-
-#### Notes
-
-* If you run the `hladl seq` script without running the appropriate `hladl init`, it will try to download the appropriate sequences on the fly. 
-
-* While the IMGTHLA repo does also store unspliced genomic DNA files, these are handled slightly different, are much larger files, and frankly I don't need them in my pipelines right now, so they're not yet catered to.
-
-* Pseudogenes and other aberrent length entries in the dataset cannot be used for `ecd` mode.
-
-### Importing `hladl` for use inside other scripts
+#### Importing `hladl` for use inside other scripts
 
 The major case use I wanted `hladl` for is to import in other scripts, to allow for easy in-line grabbing of HLA sequences. It can be done by simple importing the relevant components and calling the `seq` function:
 
@@ -81,6 +76,39 @@ seq2 = seq('B*08:01', 4, 'nuc', 'full', 'stdout', data_dir)
 print(seq2)
 ATGCTGGTCATGGCGCCCCGAACCGTCCTCCTGCTGCTCTCGGCGGCCCTGGCCCTGACCGAGACCTGGGCCGGCTCCCACTCCATGAGGTATTTCGACACCGCCATGTCCCGGCCCGGCCGCGGGGAGCCCCGCTTCATCTCAGTGGGCTACGTGGACGACACGCAGTTCGTGAGGTTCGACAGCGACGCCGCGAGTCCGAGAGAGGAGCCGCGGGCGCCGTGGATAGAGCAGGAGGGGCCGGAGTATTGGGACCGGAACACACAGATCTTCAAGACCAACACACAGACTGACCGAGAGAGCCTGCGGAACCTGCGCGGCTACTACAACCAGAGCGAGGCCGGGTCTCACACCCTCCAGAGCATGTACGGCTGCGACGTGGGGCCGGACGGGCGCCTCCTCCGCGGGCATAACCAGTACGCCTACGACGGCAAGGATTACATCGCCCTGAACGAGGACCTGCGCTCCTGGACCGCGGCGGACACCGCGGCTCAGATCACCCAGCGCAAGTGGGAGGCGGCCCGTGTGGCGGAGCAGGACAGAGCCTACCTGGAGGGCACGTGCGTGGAGTGGCTCCGCAGATACCTGGAGAACGGGAAGGACACGCTGGAGCGCGCGGACCCCCCAAAGACACACGTGACCCACCACCCCATCTCTGACCATGAGGCCACCCTGAGGTGCTGGGCCCTGGGCTTCTACCCTGCGGAGATCACACTGACCTGGCAGCGGGATGGCGAGGACCAAACTCAGGACACTGAGCTTGTGGAGACCAGACCAGCAGGAGATAGAACCTTCCAGAAGTGGGCAGCTGTGGTGGTGCCTTCTGGAGAAGAGCAGAGATACACATGCCATGTACAGCATGAGGGGCTGCCGAAGCCCCTCACCCTGAGATGGGAGCCGTCTTCCCAGTCCACCGTCCCCATCGTGGGCATTGTTGCTGGCCTGGCTGTCCTAGCAGTTGTGGTCATCGGAGCTGTGGTCGCTGCTGTGATGTGTAGGAGGAAGAGCTCAGGTGGAAAAGGAGGGAGCTACTCTCAGGCTGCGTGCAGCGACAGTGCCCAGGGCTCTGATGTGTCTCTCACAGCTTGA
 ```
+
+#### Inferring HLA alleles from sequence
+
+Another task that I sometimes need to do when working with HLAs is to figure out what allele a given sequence derives from (most frequently when trying to determine the nature of an HLA found in a TCR-pMHC structure, which can be laborious to locate in the metadata and associated publications). 
+
+This can be achieved with the `hladl infer` command, which uses a tag string Aho-Corasick matching approach (inspired by the approach taken in [the TCR annotation software Decombinator](https://github.com/innate2adaptive/Decombinator/), in particular [`autoDCR`, my experimental TCR toolkit derived from that](https://github.com/JamieHeather/autoDCR). In effect it breaks each HLA allele (at a given resolution) into overlapping tag sequences, which it uses to populate a trie used to search a given input string, with HLA alleles identified by the greatest number of tag matches.
+
+This defaults to expect protein sequences, but can also infer from cDNA sequences by providing `nuc` to the `--seqtype / -s` flag:
+
+```bash
+# Using the HLA-A*02:01 sequence (produced with hladl seq)
+hladl infer -s nuc ATGGCCGTCATGGCGCCCCGAACCCTCGTCCTGCTACTCTCGGGGGCTCTGGCCCTGACCCAGACCTGGGCGGGCTCTCACTCCATGAGGTATTTCTTCACATCCGTGTCCCGGCCCGGCCGCGGGGAGCCCCGCTTCATCGCAGTGGGCTACGTGGACGACACGCAGTTCGTGCGGTTCGACAGCGACGCCGCGAGCCAGAGGATGGAGCCGCGGGCGCCGTGGATAGAGCAGGAGGGTCCGGAGTATTGGGACGGGGAGACACGGAAAGTGAAGGCCCACTCACAGACTCACCGAGTGGACCTGGGGACCCTGCGCGGCTACTACAACCAGAGCGAGGCCGGTTCTCACACCGTCCAGAGGATGTATGGCTGCGACGTGGGGTCGGACTGGCGCTTCCTCCGCGGGTACCACCAGTACGCCTACGACGGCAAGGATTACATCGCCCTGAAAGAGGACCTGCGCTCTTGGACCGCGGCGGACATGGCAGCTCAGACCACCAAGCACAAGTGGGAGGCGGCCCATGTGGCGGAGCAGTTGAGAGCCTACCTGGAGGGCACGTGCGTGGAGTGGCTCCGCAGATACCTGGAGAACGGGAAGGAGACGCTGCAGCGCACGGACGCCCCCAAAACGCATATGACTCACCACGCTGTCTCTGACCATGAAGCCACCCTGAGGTGCTGGGCCCTGAGCTTCTACCCTGCGGAGATCACACTGACCTGGCAGCGGGATGGGGAGGACCAGACCCAGGACACGGAGCTCGTGGAGACCAGGCCTGCAGGGGATGGAACCTTCCAGAAGTGGGCGGCTGTGGTGGTGCCTTCTGGACAGGAGCAGAGATACACCTGCCATGTGCAGCATGAGGGTTTGCCCAAGCCCCTCACCCTGAGATGGGAGCCGTCTTCCCAGCCCACCATCCCCATCGTGGGCATCATTGCTGGCCTGGTTCTCTTTGGAGCTGTGATCACTGGAGCTGTGGTCGCTGCTGTGATGTGGAGGAGGAAGAGCTCAGATAGAAAAGGAGGGAGCTACTCTCAGGCTGCAAGCAGTGACAGTGCCCAGGGCTCTGATGTGTCTCTCACAGCTTGTAAAGTGTGA
+
+Detected top-matching alleles: ['A*02:01']
+Number of tags per hit: 108
+
+# Or let's try it on the protein sequence of B*35*08 from PDB file 2AK4
+hladl infer GSHSMRYFYTAMSRPGRGEPRFIAVGYVDDTQFVRFDSDAASPRTEPRAPWIEQEGPEYWDRNTQIFKTNTQTYRESLRNLRGYYNQSEAGSHIIQRMYGCDLGPDGRLLRGHDQSAYDGKDYIALNEDLSSWTAADTAAQITQRKWEAARVAEQRRAYLEGLCVEWLRRYLENGKETLQRADPPKTHVTHHPVSDHEATLRCWALGFYPAEITLTWQRDGEDQTQDTELVETRPAGDRTFQKWAAVVVPSGEEQRYTCHVQHEGLPKPLTLRWEP
+
+Detected top-matching alleles: ['B*35:08']
+Number of tags per hit: 26
+```
+
+
+#### Notes
+
+* If you run the `hladl seq` script without running the appropriate `hladl init`, it will try to download the appropriate sequences on the fly. 
+
+* While the IMGTHLA repo does also store unspliced genomic DNA files, these are handled slightly different, are much larger files, and frankly I don't need them in my pipelines right now, so they're not yet catered to yet.
+
+* Pseudogenes and other aberrent length entries in the dataset cannot be used for `ecd` mode.
+
+* Note that by default the `hladl infer` trie uses 20-mer tags. Also note that the output is a (alphabetically sorted) list for all alleles which share the same number of tag hits. This is because often multiple alleles will be indistinguishable, particularly at the amino acid level or lower resolutions.
 
 ### Data licensing and information
 

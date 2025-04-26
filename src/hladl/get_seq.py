@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
 
-import os
-import gzip
-import json
 from . import hladlfunctions as fxn
-from . import download as dl
 
 
 def seq(allele, digits, seqtype, mode, output_mode, data_dir):
+    """
+    :param allele: str, IMGTHLA format of HLA gene to produce
+    :param digits: int, resolution of HLA allele number (2/4/6/8)
+    :param seqtype: str, sequence type as per IMGTHLA (gen, nuc, prot)
+    :param mode: str, mode describing sequences sought
+    :param output_mode: str, describing how to output the results
+    :param data_dir: str, path to hladl data directory
+    :return: depends on mode: may return str of pulled allele, or save to file as requested
+    """
 
     # Check input parameters
     fxn.check_digits(digits)
@@ -20,26 +25,12 @@ def seq(allele, digits, seqtype, mode, output_mode, data_dir):
     if mode not in fxn.modes:
         raise IOError(f"Requested mode ({mode}) is not a recognised mode ({fxn.modes}).")
 
-    if mode == 'ecd' and (seqtype == 'nuc' or allele[0] not in ['A', 'B', 'C']):
+    if mode == 'ecd' and (seqtype == 'nuc' or allele[0] not in fxn.featured_mhci):
         raise IOError("The extracellular domain mode is currently only configured"
                       " to work with classical MHC-I protein sequences.")
 
-    # Check to see if the relevant data is present
-    type_match = '_' + str(digits) + '_' + seqtype
-    data_files = [x for x in os.listdir(data_dir) if x.endswith('.json.gz') and type_match in x]
-
-    if not data_files:
-        print("Necessary data not detected: downloading. ")
-        dl.get_data(seqtype, digits, data_dir)
-        data_files = [x for x in os.listdir(data_dir) if x.endswith('.json.gz') and type_match in x]
-
-    # Use the most recent entry
-    data_files.sort()
-    recent = data_files[-1]
-
-    hla_file = os.path.join(data_dir, recent)
-    with gzip.open(hla_file, 'rt') as in_file:
-        hla = json.load(in_file)
+    # Get the relevant data
+    hla, data_file = fxn.get_data(digits, seqtype, data_dir)
 
     if allele not in hla:
         raise IOError("Allele not present in HLA dictionary.")

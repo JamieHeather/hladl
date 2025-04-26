@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import textwrap
+import os
+import gzip
+import json
+from . import download as dl
 
 
 def readfq(fastx_file):
@@ -76,6 +80,54 @@ def check_digits(requested_digits):
         raise IOError("The only acceptable value for 'digits' are 2, 4, 6, and 8. ")
 
 
+def get_data(digits, seqtype, data_dir):
+    # TODO docstr
+
+    # Check to see if the relevant data is present
+    type_match = '_' + str(digits) + '_' + seqtype
+    data_files = [x for x in os.listdir(data_dir) if x.endswith('.json.gz')
+                  and type_match in x and 'tags' not in x]
+
+    if not data_files:
+        print("Necessary data not detected: downloading. ")
+        dl.get_data(seqtype, digits, data_dir)
+        data_files = [x for x in os.listdir(data_dir) if x.endswith('.json.gz') and type_match in x]
+
+    # Use the most recent entry
+    data_files.sort()
+    recent = data_files[-1]
+    hla = read_json(os.path.join(data_dir, recent))
+    return hla, recent
+
+
+def save_json(out_path, to_save, print2stdout=True):
+    """
+    :param out_path: str, path to save JSON to
+    :param to_save: dict to save as JSON
+    :param print2stdout: bool, detailing whether to print a confirmation after saving
+    :return: nothing
+    """
+    with gzip.open(out_path, 'wt') as out_file:
+        json.dump(to_save, out_file)
+
+    if print2stdout:
+        print('\tSaved to', out_path)
+
+
+def read_json(in_path):
+    """
+    :param in_path: str, path to JSON file to read in
+    :return: parsed JSON document
+    """
+    try:
+
+        with gzip.open(in_path, 'rt') as in_file:
+            return json.load(in_file)
+
+    except Exception:
+        raise IOError(f"Unable to read in JSON file '{in_path}'.")
+
+
 modes = ['full', 'ecd']
 
 # Details of the sequences and locations of the relevant domains, based on Uniprot examples
@@ -92,3 +144,5 @@ domain_locs = {'signal': {'A': '1-24',
                'transmemb': {'A': '309-332',
                              'B': '310-333',
                              'C': '309-333'}}
+
+featured_mhci = ['A', 'B', 'C', 'E']

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import requests
-import json
 import gzip
 import os
 import collections as coll
@@ -62,10 +61,7 @@ def get_data(seqs, digits, data_dir):
 
             # Then write that out that dict for later use
             processed_path = os.path.join(data_dir, out_prefix + seq + '.json.gz')
-            with gzip.open(processed_path, 'wt') as json_file:
-                json.dump(hla_dict, json_file)
-
-            print('\t' + processed_path)
+            fxn.save_json(processed_path, hla_dict)
 
         else:
             raise ConnectionError("Unable to reach the ANHIG/IMGTHLA Github repo!")
